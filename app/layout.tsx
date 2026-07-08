@@ -3,7 +3,9 @@ import { Geist } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { getSessionUser } from "@/lib/auth";
+import { signOutAction } from "@/lib/actions";
 import SwRegister from "./components/sw-register";
+import AuthProvider from "./components/auth-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,24 +28,35 @@ export default async function RootLayout({
 }>) {
   const user = await getSessionUser();
   return (
-    <html lang="pl" className={`${geistSans.variable} h-full antialiased`}>
+    <html
+      lang="pl"
+      className={`${geistSans.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
       <body className="mx-auto min-h-full w-full max-w-lg bg-white text-gray-900">
-        <SwRegister />
-        {user && (
-          <nav className="flex items-center gap-4 border-b border-gray-200 px-4 py-3 text-sm">
-            <Link href="/" className="font-bold text-green-700">
-              Wiatlist
-            </Link>
-            <Link href="/stats" className="text-gray-600 hover:text-gray-900">
-              Statystyki
-            </Link>
-            <Link href="/invites" className="text-gray-600 hover:text-gray-900">
-              Zaproszenia
-            </Link>
-            <span className="ml-auto text-gray-400">{user.name}</span>
-          </nav>
-        )}
-        <main className="p-4">{children}</main>
+        <AuthProvider>
+          <SwRegister />
+          {user && (
+            <nav className="flex items-center gap-4 border-b border-gray-200 px-4 py-3 text-sm">
+              <Link href="/" className="font-bold text-green-700">
+                Wiatlist
+              </Link>
+              <Link href="/stats" className="text-gray-600 hover:text-gray-900">
+                Statystyki
+              </Link>
+              <Link href="/invites" className="text-gray-600 hover:text-gray-900">
+                Zaproszenia
+              </Link>
+              <span className="ml-auto text-gray-400">{user.name}</span>
+              <form action={signOutAction}>
+                <button type="submit" className="text-gray-600 hover:text-gray-900">
+                  Wyloguj
+                </button>
+              </form>
+            </nav>
+          )}
+          <main className="p-4">{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );

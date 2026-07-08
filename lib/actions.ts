@@ -4,18 +4,26 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sql } from "./db";
-import { createSession, requireUser } from "./auth";
+import { requireUser } from "./auth";
+import { auth } from "./neon-auth/server";
 
 // --- bootstrap ---
 
-export async function setupOwner(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
+export async function setupOwner() {
+  const { data: session } = await auth.getSession();
+  if (!session?.user) redirect("/auth/sign-in");
   const [{ count }] = (await sql`SELECT count(*)::int AS count FROM users`) as [{ count: number }];
   if (count > 0) redirect("/");
-  const [user] = (await sql`INSERT INTO users (name) VALUES (${name}) RETURNING id`) as [{ id: string }];
-  await createSession(user.id);
+  const name = session.user.name?.trim() || session.user.email;
+  await sql`INSERT INTO users (id, name) VALUES (${session.user.id}, ${name}) ON CONFLICT (id) DO NOTHING`;
   redirect("/");
+}
+
+// --- session ---
+
+export async function signOutAction() {
+  await auth.signOut();
+  redirect("/auth/sign-in");
 }
 
 // --- invites ---
@@ -38,14 +46,14 @@ export async function revokeInvite(formData: FormData) {
 
 export async function acceptInvite(formData: FormData) {
   const token = String(formData.get("token") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
+  const { data: session } = await auth.getSession();
+  if (!session?.user) redirect(`/auth/sign-in?redirectTo=/invite/${token}`);
   const [invite] = (await sql`
     SELECT token FROM invites WHERE token = ${token} AND expires_at > now()
   `) as [{ token: string } | undefined];
   if (!invite) redirect(`/invite/${token}`);
-  const [user] = (await sql`INSERT INTO users (name) VALUES (${name}) RETURNING id`) as [{ id: string }];
-  await createSession(user.id);
+  const name = session.user.name?.trim() || session.user.email;
+  await sql`INSERT INTO users (id, name) VALUES (${session.user.id}, ${name}) ON CONFLICT (id) DO NOTHING`;
   redirect("/");
 }
 

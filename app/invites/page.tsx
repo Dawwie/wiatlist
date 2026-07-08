@@ -16,8 +16,11 @@ export default async function InvitesPage() {
     SELECT token, expires_at FROM invites WHERE expires_at > now() ORDER BY created_at DESC
   `) as { token: string; expires_at: string }[];
   const members = (await sql`
-    SELECT id, name FROM users ORDER BY created_at
-  `) as { id: string; name: string }[];
+    SELECT u.id, u.name, au.email
+    FROM users u
+    JOIN neon_auth."user" au ON au.id = u.id
+    ORDER BY u.created_at
+  `) as { id: string; name: string; email: string }[];
 
   return (
     <div className="flex flex-col gap-8">
@@ -71,6 +74,7 @@ export default async function InvitesPage() {
             >
               <span>
                 {member.name}
+                <span className="ml-2 text-xs text-gray-400">{member.email}</span>
                 {member.id === user.id && (
                   <span className="ml-2 text-xs text-gray-400">(ty)</span>
                 )}

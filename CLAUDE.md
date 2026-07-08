@@ -22,15 +22,15 @@ No test suite. Verify changes E2E in the browser (two isolated browser contexts 
 
 ## Architecture
 
-**No API routes.** All mutations are Server Actions in `lib/actions.ts` (~5–10 lines each: `requireUser()` → one `sql` statement → `revalidatePath()`). Reads happen directly in Server Components. "Realtime" is `app/components/refresh-poller.tsx` calling `router.refresh()` every 5s (paused when `document.hidden`).
+**No custom API routes** besides the Neon Auth handler (`app/api/auth/[...path]/route.ts`). All mutations are Server Actions in `lib/actions.ts` (~5–10 lines each: `requireUser()` → one `sql` statement → `revalidatePath()`). Reads happen directly in Server Components. "Realtime" is `app/components/refresh-poller.tsx` calling `router.refresh()` every 5s (paused when `document.hidden`).
 
-**Auth** — no passwords/OAuth; two layers:
-- `proxy.ts` (Next 16 rename of middleware.ts): cheap cookie-presence gate, no DB. Public paths: `/invite/*`, `/setup`, `/no-access`, manifest/sw/icons.
-- `lib/auth.ts` `requireUser()`: real validation (session token → DB lookup, React `cache()`d per request). Must be called at the top of **every protected page and every Server Action** — proxy alone is spoofable.
+**Auth** — Neon Auth (Google OAuth + email/password via `@neondatabase/auth` + `@neondatabase/auth-ui`) authenticates; a separate `users` table membership row authorizes (invite-only gate). Two layers:
+- `proxy.ts` (Next 16 rename of middleware.ts): `auth.middleware({ loginUrl: "/auth/sign-in" })` — requires a Neon Auth session, no DB hit. Excluded paths: `/api/auth/*`, `/auth/*`, `/no-access`, manifest/sw/icons.
+- `lib/auth.ts` `requireUser()`: real authorization (Neon Auth session → `users` table membership lookup, React `cache()`d per request). Must be called at the top of **every protected page and every Server Action** — proxy alone only proves *who*, not *member*.
 
-Flow: first visitor to `/setup` (only when `users` is empty) becomes owner → generates multi-use 7-day invite links at `/invites` → invitee opens `/invite/[token]`, enters name, gets a user row + 1-year opaque session token in httpOnly cookie. Access is household-wide (every member sees every list); no per-list ACLs.
+Flow: sign in via `/auth/sign-in` (Google or email/password, prebuilt Neon Auth UI) → first signed-in user when `users` is empty becomes owner via `/setup` → generates multi-use 7-day invite links at `/invites` → invitee signs in, opens `/invite/[token]`, confirms, gets a `users` row keyed to their Neon Auth id. Access is household-wide (every member sees every list); no per-list ACLs. Removing a member (`/invites`) deletes only the `users` row — their Neon Auth account still exists, so they land on `/no-access` until re-invited.
 
-**Data** (`schema.sql`, applied by `scripts/init-db.mjs`): `users`, `sessions`, `invites`, `lists`, `items`. Items are **soft-deleted** (`deleted_at`) so `/stats` (GROUP BY over all item rows ever added) survives deletions — don't hard-DELETE items. Lists hard-delete and cascade their items.
+**Data** (`schema.sql`, applied by `scripts/init-db.mjs`): `users` (membership, FK to Neon Auth's `neon_auth."user"`), `invites`, `lists`, `items`. Auth accounts/sessions live in the `neon_auth` schema, managed by Neon Auth — not this app's schema. Items are **soft-deleted** (`deleted_at`) so `/stats` (GROUP BY over all item rows ever added) survives deletions — don't hard-DELETE items. Lists hard-delete and cascade their items.
 
 **DB access**: `lib/db.ts` exports `sql` — lazily initialized on first call so builds don't require `DATABASE_URL` at import time. Neon driver speaks HTTP to Neon's proxy; it cannot connect to a plain local Postgres. Dev and prod share the same Neon database.
 

@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { auth } from "@/lib/neon-auth/server";
 import { acceptInvite } from "@/lib/actions";
+
+export const dynamic = "force-dynamic";
 
 export default async function InvitePage({
   params,
@@ -11,6 +14,9 @@ export default async function InvitePage({
   const { token } = await params;
 
   if (await getSessionUser()) redirect("/");
+
+  const { data: session } = await auth.getSession();
+  if (!session?.user) redirect(`/auth/sign-in?redirectTo=/invite/${token}`);
 
   const [invite] = (await sql`
     SELECT token FROM invites WHERE token = ${token} AND expires_at > now()
@@ -30,19 +36,14 @@ export default async function InvitePage({
   return (
     <div className="mx-auto mt-16 max-w-sm">
       <h1 className="mb-2 text-2xl font-bold">Dołącz do Wiatlist</h1>
-      <p className="mb-6 text-gray-600">Jak masz na imię?</p>
-      <form action={acceptInvite} className="flex flex-col gap-3">
+      <p className="mb-6 text-gray-600">
+        Dołączasz jako {session.user.name || session.user.email}
+      </p>
+      <form action={acceptInvite}>
         <input type="hidden" name="token" value={token} />
-        <input
-          name="name"
-          required
-          maxLength={50}
-          placeholder="Twoje imię"
-          className="rounded-lg border border-gray-300 px-3 py-2"
-        />
         <button
           type="submit"
-          className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
+          className="w-full rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
         >
           Dołącz
         </button>
