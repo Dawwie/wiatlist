@@ -1,0 +1,52 @@
+import { redirect } from "next/navigation";
+import { sql } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
+import { acceptInvite } from "@/lib/actions";
+
+export default async function InvitePage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
+  const { token } = await params;
+
+  if (await getSessionUser()) redirect("/");
+
+  const [invite] = (await sql`
+    SELECT token FROM invites WHERE token = ${token} AND expires_at > now()
+  `) as [{ token: string } | undefined];
+
+  if (!invite) {
+    return (
+      <div className="mx-auto mt-16 max-w-sm text-center">
+        <h1 className="mb-2 text-2xl font-bold">Zaproszenie wygasło</h1>
+        <p className="text-gray-600">
+          Ten link jest nieważny. Poproś o nowy link z zaproszeniem.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto mt-16 max-w-sm">
+      <h1 className="mb-2 text-2xl font-bold">Dołącz do Wiatlist</h1>
+      <p className="mb-6 text-gray-600">Jak masz na imię?</p>
+      <form action={acceptInvite} className="flex flex-col gap-3">
+        <input type="hidden" name="token" value={token} />
+        <input
+          name="name"
+          required
+          maxLength={50}
+          placeholder="Twoje imię"
+          className="rounded-lg border border-gray-300 px-3 py-2"
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
+        >
+          Dołącz
+        </button>
+      </form>
+    </div>
+  );
+}
