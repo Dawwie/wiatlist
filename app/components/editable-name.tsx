@@ -1,15 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { UNITS, DEFAULT_UNIT } from "@/lib/units";
 
 export default function EditableName({
   id,
   name,
+  quantity,
+  unit,
   action,
   extraFields = {},
 }: {
   id: string;
   name: string;
+  quantity?: string | null;
+  unit?: string;
   action: (formData: FormData) => Promise<void>;
   extraFields?: Record<string, string>;
 }) {
@@ -48,6 +53,27 @@ export default function EditableName({
         autoFocus
         className="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm"
       />
+      <input
+        name="quantity"
+        type="number"
+        min={0}
+        step="any"
+        inputMode="decimal"
+        defaultValue={quantity ?? ""}
+        placeholder="Ilość"
+        className="w-16 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+      />
+      <select
+        name="unit"
+        defaultValue={unit ?? DEFAULT_UNIT}
+        className="rounded-lg border border-gray-300 px-2 py-1 text-sm"
+      >
+        {UNITS.map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
       <button
         type="submit"
         className="rounded-lg bg-green-600 px-2 py-1 text-sm text-white"

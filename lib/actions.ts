@@ -6,6 +6,16 @@ import { redirect } from "next/navigation";
 import { sql } from "./db";
 import { requireUser } from "./auth";
 import { auth } from "./neon-auth/server";
+import { UNITS, DEFAULT_UNIT } from "./units";
+
+function parseQuantityUnit(formData: FormData) {
+  const qtyRaw = String(formData.get("quantity") ?? "").trim();
+  let quantity: number | null = qtyRaw === "" ? null : Number(qtyRaw);
+  if (quantity !== null && (Number.isNaN(quantity) || quantity < 0)) quantity = null;
+  const unitRaw = String(formData.get("unit") ?? "");
+  const unit = (UNITS as readonly string[]).includes(unitRaw) ? unitRaw : DEFAULT_UNIT;
+  return { quantity, unit };
+}
 
 // --- bootstrap ---
 
@@ -97,7 +107,8 @@ export async function addItem(formData: FormData) {
   const listId = String(formData.get("listId"));
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-  await sql`INSERT INTO items (list_id, name, created_by) VALUES (${listId}, ${name}, ${user.id})`;
+  const { quantity, unit } = parseQuantityUnit(formData);
+  await sql`INSERT INTO items (list_id, name, quantity, unit, created_by) VALUES (${listId}, ${name}, ${quantity}, ${unit}, ${user.id})`;
   revalidatePath(`/list/${listId}`);
 }
 
@@ -108,12 +119,13 @@ export async function toggleItem(formData: FormData) {
   revalidatePath(`/list/${listId}`);
 }
 
-export async function renameItem(formData: FormData) {
+export async function updateItem(formData: FormData) {
   await requireUser();
   const listId = String(formData.get("listId"));
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-  await sql`UPDATE items SET name = ${name} WHERE id = ${String(formData.get("id"))}`;
+  const { quantity, unit } = parseQuantityUnit(formData);
+  await sql`UPDATE items SET name = ${name}, quantity = ${quantity}, unit = ${unit} WHERE id = ${String(formData.get("id"))}`;
   revalidatePath(`/list/${listId}`);
 }
 

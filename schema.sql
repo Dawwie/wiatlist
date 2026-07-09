@@ -28,4 +28,7 @@ CREATE TABLE IF NOT EXISTS items (
   deleted_at timestamptz
 );
 
+ALTER TABLE items ADD COLUMN IF NOT EXISTS quantity numeric;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS unit text NOT NULL DEFAULT 'szt';
+
 CREATE INDEX IF NOT EXISTS idx_items_list ON items(list_id) WHERE deleted_at IS NULL;

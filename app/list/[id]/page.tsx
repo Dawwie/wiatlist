@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { addItem, deleteItem, renameItem, toggleItem } from "@/lib/actions";
+import { addItem, deleteItem, updateItem, toggleItem } from "@/lib/actions";
+import { UNITS, DEFAULT_UNIT } from "@/lib/units";
 import EditableName from "../../components/editable-name";
 import RefreshPoller from "../../components/refresh-poller";
 
@@ -22,11 +23,17 @@ export default async function ListPage({
   if (!list) notFound();
 
   const items = (await sql`
-    SELECT id, name, checked
+    SELECT id, name, checked, quantity, unit
     FROM items
     WHERE list_id = ${id} AND deleted_at IS NULL
     ORDER BY checked, created_at DESC
-  `) as { id: string; name: string; checked: boolean }[];
+  `) as {
+    id: string;
+    name: string;
+    checked: boolean;
+    quantity: string | null;
+    unit: string;
+  }[];
 
   const suggestions = (await sql`
     SELECT lower(trim(name)) AS product
@@ -50,7 +57,7 @@ export default async function ListPage({
         <h1 className="text-xl font-bold">{list.name}</h1>
       </div>
 
-      <form action={addItem} className="mb-6 flex gap-2">
+      <form action={addItem} className="mb-6 flex flex-wrap gap-2">
         <input type="hidden" name="listId" value={list.id} />
         <input
           name="name"
@@ -65,6 +72,26 @@ export default async function ListPage({
             <option key={s.product} value={s.product} />
           ))}
         </datalist>
+        <input
+          name="quantity"
+          type="number"
+          min={0}
+          step="any"
+          inputMode="decimal"
+          placeholder="Ilość"
+          className="w-24 rounded-lg border border-gray-300 px-3 py-2"
+        />
+        <select
+          name="unit"
+          defaultValue={DEFAULT_UNIT}
+          className="rounded-lg border border-gray-300 px-3 py-2"
+        >
+          {UNITS.map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+        </select>
         <button
           type="submit"
           className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
@@ -116,12 +143,19 @@ export default async function ListPage({
                   {item.checked ? "✓" : ""}
                 </span>
                 {item.name}
+                {item.quantity != null && (
+                  <span className="ml-2 text-sm text-gray-500">
+                    {Number(item.quantity)} {item.unit}
+                  </span>
+                )}
               </button>
             </form>
             <EditableName
               id={item.id}
               name={item.name}
-              action={renameItem}
+              quantity={item.quantity}
+              unit={item.unit}
+              action={updateItem}
               extraFields={{ listId: list.id }}
             />
             <form action={deleteItem}>
