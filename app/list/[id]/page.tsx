@@ -99,20 +99,6 @@ export default async function ListPage({
         </Button>
       </form>
 
-      {suggestions.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          {suggestions.slice(0, 8).map((s) => (
-            <form key={s.product} action={addItem}>
-              <input type="hidden" name="listId" value={list.id} />
-              <input type="hidden" name="name" value={s.product} />
-              <Button type="submit" variant="outline" size="sm">
-                + {s.product}
-              </Button>
-            </form>
-          ))}
-        </div>
-      )}
-
       <ItemList
         items={items}
         listId={list.id}
