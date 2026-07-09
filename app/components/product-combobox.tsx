@@ -16,10 +16,10 @@ export default function ProductCombobox({
       allowsCustomValue
       isRequired
       menuTrigger="input"
-      className="flex-1"
+      className="w-full sm:flex-1"
       defaultItems={items}
     >
-      <ComboBox.InputGroup>
+      <ComboBox.InputGroup className="w-full">
         <Input
           placeholder="Dodaj produkt, np. mleko"
           maxLength={100}

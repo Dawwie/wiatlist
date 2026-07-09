@@ -71,22 +71,31 @@ export default async function ListPage({
         <h1 className="text-xl font-bold">{list.name}</h1>
       </div>
 
-      <form action={addItem} className="mb-6 flex flex-wrap gap-2">
+      <form
+        action={addItem}
+        className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap"
+      >
         <input type="hidden" name="listId" value={list.id} />
         <ProductCombobox suggestions={suggestions.map((s) => s.product)} />
-        <Input
-          name="quantity"
-          type="number"
-          min={0}
-          step="any"
-          inputMode="decimal"
-          placeholder="Ilość"
-          className="w-24"
-        />
-        <UnitSelect name="unit" defaultUnit={DEFAULT_UNIT} />
-        <Button type="submit" variant="primary">
-          Dodaj
-        </Button>
+        <div className="flex gap-2 sm:contents">
+          <Input
+            name="quantity"
+            type="number"
+            min={0}
+            step="any"
+            inputMode="decimal"
+            placeholder="Ilość"
+            className="flex-1 sm:w-24 sm:flex-none"
+          />
+          <UnitSelect
+            name="unit"
+            defaultUnit={DEFAULT_UNIT}
+            className="flex-1 sm:flex-none"
+          />
+          <Button type="submit" variant="primary" className="flex-1 sm:flex-none">
+            Dodaj
+          </Button>
+        </div>
       </form>
 
       <ItemList

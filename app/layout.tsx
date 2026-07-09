@@ -35,7 +35,7 @@ export default async function RootLayout({
       data-theme="light"
       suppressHydrationWarning
     >
-      <body className="mx-auto min-h-full w-full max-w-lg bg-white text-gray-900">
+      <body className="mx-auto min-h-full w-full max-w-xl bg-white text-gray-900">
         <AuthProvider>
           <SwRegister />
           {user && (
@@ -46,7 +46,10 @@ export default async function RootLayout({
               <Link href="/stats" className="text-gray-600 hover:text-gray-900">
                 Statystyki
               </Link>
-              <Link href="/invites" className="text-gray-600 hover:text-gray-900">
+              <Link
+                href="/invites"
+                className="text-gray-600 hover:text-gray-900"
+              >
                 Zaproszenia
               </Link>
               <span className="ml-auto text-gray-400">{user.name}</span>
