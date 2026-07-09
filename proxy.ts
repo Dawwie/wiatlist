@@ -1,6 +1,19 @@
+import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/neon-auth/server";
 
-export default auth.middleware({ loginUrl: "/auth/sign-in" });
+const authMiddleware = auth.middleware({ loginUrl: "/auth/sign-in" });
+
+export default function proxy(request: NextRequest) {
+  // Server Actions are same-origin POSTs already authorized by requireUser()
+  // inside every action. Running the Neon Auth session refresh here too would
+  // call get-session a second time in the same request, rotating the session
+  // token twice and logging the user out after each mutation. Skip it — the
+  // action's own requireUser() is the real gate.
+  if (request.headers.get("next-action")) {
+    return NextResponse.next();
+  }
+  return authMiddleware(request);
+}
 
 export const config = {
   matcher: [
