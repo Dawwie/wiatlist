@@ -30,5 +30,18 @@ CREATE TABLE IF NOT EXISTS items (
 
 ALTER TABLE items ADD COLUMN IF NOT EXISTS quantity numeric;
 ALTER TABLE items ADD COLUMN IF NOT EXISTS unit text NOT NULL DEFAULT 'szt';
+ALTER TABLE items ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS idx_items_list ON items(list_id) WHERE deleted_at IS NULL;
+
+CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS items_set_updated_at ON items;
+CREATE TRIGGER items_set_updated_at
+  BEFORE UPDATE ON items
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();

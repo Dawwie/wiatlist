@@ -55,9 +55,14 @@ export default async function ListPage({
     LIMIT 30
   `) as { product: string }[];
 
+  const [{ v: version }] = (await sql`
+    SELECT (extract(epoch from coalesce(max(updated_at), to_timestamp(0))) * 1000)::bigint::text AS v
+    FROM items WHERE list_id = ${id}
+  `) as [{ v: string }];
+
   return (
     <div>
-      <RefreshPoller intervalMs={5000} />
+      <RefreshPoller listId={list.id} initialVersion={version} />
       <div className="mb-4 flex items-center gap-2">
         <Link href="/" className="text-sm text-gray-500">
           ← Listy
