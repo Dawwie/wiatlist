@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
+import { Button } from "@heroui/react";
 import EditableName from "./editable-name";
+import TrashIcon from "./trash-icon";
 import {
   itemTransition,
   rowContentVariants,
@@ -87,13 +89,15 @@ export default function ItemRow({
         <form action={deleteItem}>
           <input type="hidden" name="id" value={item.id} />
           <input type="hidden" name="listId" value={listId} />
-          <button
+          <Button
             type="submit"
             aria-label="Usuń produkt"
-            className="rounded-lg px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+            variant="danger"
+            size="sm"
+            isIconOnly
           >
-            Usuń
-          </button>
+            <TrashIcon />
+          </Button>
         </form>
       </motion.div>
     </motion.li>

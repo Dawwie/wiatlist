@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button, Input, SearchField } from "@heroui/react";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import {
@@ -9,9 +10,10 @@ import {
   updateItem,
   toggleItem,
 } from "@/lib/actions";
-import { UNITS, DEFAULT_UNIT } from "@/lib/units";
+import { DEFAULT_UNIT } from "@/lib/units";
 import ItemList from "../../components/item-list";
 import RefreshPoller from "../../components/refresh-poller";
+import UnitSelect from "../../components/unit-select";
 
 export const dynamic = "force-dynamic";
 
@@ -65,45 +67,36 @@ export default async function ListPage({
 
       <form action={addItem} className="mb-6 flex flex-wrap gap-2">
         <input type="hidden" name="listId" value={list.id} />
-        <input
-          name="name"
-          required
-          maxLength={100}
-          placeholder="Dodaj produkt, np. mleko"
-          list="product-suggestions"
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2"
-        />
+        <SearchField name="name" isRequired aria-label="Dodaj produkt" className="flex-1">
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input
+              maxLength={100}
+              placeholder="Dodaj produkt, np. mleko"
+              list="product-suggestions"
+              autoComplete="off"
+            />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
         <datalist id="product-suggestions">
           {suggestions.map((s) => (
             <option key={s.product} value={s.product} />
           ))}
         </datalist>
-        <input
+        <Input
           name="quantity"
           type="number"
           min={0}
           step="any"
           inputMode="decimal"
           placeholder="Ilość"
-          className="w-24 rounded-lg border border-gray-300 px-3 py-2"
+          className="w-24"
         />
-        <select
-          name="unit"
-          defaultValue={DEFAULT_UNIT}
-          className="rounded-lg border border-gray-300 px-3 py-2"
-        >
-          {UNITS.map((u) => (
-            <option key={u} value={u}>
-              {u}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
-        >
+        <UnitSelect name="unit" defaultUnit={DEFAULT_UNIT} />
+        <Button type="submit" variant="primary">
           Dodaj
-        </button>
+        </Button>
       </form>
 
       {suggestions.length > 0 && (
@@ -112,12 +105,9 @@ export default async function ListPage({
             <form key={s.product} action={addItem}>
               <input type="hidden" name="listId" value={list.id} />
               <input type="hidden" name="name" value={s.product} />
-              <button
-                type="submit"
-                className="rounded-full border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50"
-              >
+              <Button type="submit" variant="outline" size="sm">
                 + {s.product}
-              </button>
+              </Button>
             </form>
           ))}
         </div>

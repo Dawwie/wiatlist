@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@heroui/react";
 import { auth } from "@/lib/neon-auth/server";
 import { signOutAction } from "@/lib/actions";
 
@@ -25,9 +26,9 @@ export default async function NoAccessPage() {
         </Link>
         {session?.user && (
           <form action={signOutAction}>
-            <button type="submit" className="text-sm text-gray-600 underline">
+            <Button type="submit" variant="ghost" size="sm">
               Wyloguj / zaloguj na inne konto
-            </button>
+            </Button>
           </form>
         )}
       </div>

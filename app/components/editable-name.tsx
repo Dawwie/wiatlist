@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { UNITS, DEFAULT_UNIT } from "@/lib/units";
+import { Button, Input } from "@heroui/react";
+import { DEFAULT_UNIT } from "@/lib/units";
+import UnitSelect from "./unit-select";
 
 export default function EditableName({
   id,
@@ -22,14 +24,14 @@ export default function EditableName({
 
   if (!editing) {
     return (
-      <button
-        type="button"
+      <Button
         aria-label="Zmień nazwę"
-        onClick={() => setEditing(true)}
-        className="rounded-lg px-2 py-1 text-sm text-gray-500 hover:bg-gray-50"
+        variant="ghost"
+        size="sm"
+        onPress={() => setEditing(true)}
       >
         Edytuj
-      </button>
+      </Button>
     );
   }
 
@@ -45,15 +47,15 @@ export default function EditableName({
       {Object.entries(extraFields).map(([key, value]) => (
         <input key={key} type="hidden" name={key} value={value} />
       ))}
-      <input
+      <Input
         name="name"
         defaultValue={name}
         required
         maxLength={100}
         autoFocus
-        className="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+        className="w-32"
       />
-      <input
+      <Input
         name="quantity"
         type="number"
         min={0}
@@ -61,25 +63,12 @@ export default function EditableName({
         inputMode="decimal"
         defaultValue={quantity ?? ""}
         placeholder="Ilość"
-        className="w-16 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+        className="w-16"
       />
-      <select
-        name="unit"
-        defaultValue={unit ?? DEFAULT_UNIT}
-        className="rounded-lg border border-gray-300 px-2 py-1 text-sm"
-      >
-        {UNITS.map((u) => (
-          <option key={u} value={u}>
-            {u}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        className="rounded-lg bg-green-600 px-2 py-1 text-sm text-white"
-      >
+      <UnitSelect name="unit" defaultUnit={unit ?? DEFAULT_UNIT} />
+      <Button type="submit" variant="primary" size="sm">
         OK
-      </button>
+      </Button>
     </form>
   );
 }

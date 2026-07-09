@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Button } from "@heroui/react";
 import { sql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { auth } from "@/lib/neon-auth/server";
@@ -41,12 +42,9 @@ export default async function InvitePage({
       </p>
       <form action={acceptInvite}>
         <input type="hidden" name="token" value={token} />
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
-        >
+        <Button type="submit" variant="primary" fullWidth>
           Dołącz
-        </button>
+        </Button>
       </form>
     </div>
   );

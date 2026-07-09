@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import { Button } from "@heroui/react";
 import { getSessionUser } from "@/lib/auth";
 import { signOutAction } from "@/lib/actions";
 import SwRegister from "./components/sw-register";
@@ -30,7 +31,8 @@ export default async function RootLayout({
   return (
     <html
       lang="pl"
-      className={`${geistSans.variable} h-full antialiased`}
+      className={`light ${geistSans.variable} h-full antialiased`}
+      data-theme="light"
       suppressHydrationWarning
     >
       <body className="mx-auto min-h-full w-full max-w-lg bg-white text-gray-900">
@@ -49,9 +51,9 @@ export default async function RootLayout({
               </Link>
               <span className="ml-auto text-gray-400">{user.name}</span>
               <form action={signOutAction}>
-                <button type="submit" className="text-gray-600 hover:text-gray-900">
+                <Button type="submit" variant="ghost" size="sm">
                   Wyloguj
-                </button>
+                </Button>
               </form>
             </nav>
           )}

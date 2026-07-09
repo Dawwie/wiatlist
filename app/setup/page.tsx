@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Button } from "@heroui/react";
 import { sql } from "@/lib/db";
 import { auth } from "@/lib/neon-auth/server";
 import { setupOwner } from "@/lib/actions";
@@ -20,12 +21,9 @@ export default async function SetupPage() {
         właścicielem Wiatlist.
       </p>
       <form action={setupOwner}>
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
-        >
+        <Button type="submit" variant="primary" fullWidth>
           Zaczynamy
-        </button>
+        </Button>
       </form>
     </div>
   );

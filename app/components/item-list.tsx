@@ -2,7 +2,9 @@
 
 import { useOptimistic } from "react";
 import { AnimatePresence } from "motion/react";
+import { Button } from "@heroui/react";
 import ItemRow from "./item-row";
+import TrashIcon from "./trash-icon";
 
 type Item = {
   id: string;
@@ -55,12 +57,10 @@ export default function ItemList({
       {optimisticItems.length > 0 && (
         <form action={handleDeleteAll} className="mb-2 flex justify-end">
           <input type="hidden" name="listId" value={listId} />
-          <button
-            type="submit"
-            className="rounded-lg px-2 py-1 text-sm text-red-600 hover:bg-red-50"
-          >
+          <Button type="submit" variant="danger" size="sm">
+            <TrashIcon />
             Usuń wszystkie
-          </button>
+          </Button>
         </form>
       )}
       <ul className="flex flex-col">

@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
+import { Button } from "@heroui/react";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { createInvite, removeMember, revokeInvite } from "@/lib/actions";
 import CopyButton from "../components/copy-button";
+import TrashIcon from "../components/trash-icon";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +29,9 @@ export default async function InvitesPage() {
       <section>
         <h1 className="mb-4 text-xl font-bold">Zaproszenia</h1>
         <form action={createInvite}>
-          <button
-            type="submit"
-            className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
-          >
+          <Button type="submit" variant="primary">
             Wygeneruj link z zaproszeniem
-          </button>
+          </Button>
         </form>
         <ul className="mt-4 flex flex-col gap-3">
           {invites.map((invite) => {
@@ -44,12 +43,10 @@ export default async function InvitesPage() {
                   <CopyButton text={url} />
                   <form action={revokeInvite}>
                     <input type="hidden" name="token" value={invite.token} />
-                    <button
-                      type="submit"
-                      className="rounded-lg px-3 py-1 text-sm text-red-600 hover:bg-red-50"
-                    >
+                    <Button type="submit" variant="danger" size="sm">
+                      <TrashIcon />
                       Unieważnij
-                    </button>
+                    </Button>
                   </form>
                   <span className="ml-auto text-xs text-gray-400">
                     ważny do {new Date(invite.expires_at).toLocaleDateString("pl-PL")}
@@ -82,12 +79,15 @@ export default async function InvitesPage() {
               {member.id !== user.id && (
                 <form action={removeMember}>
                   <input type="hidden" name="userId" value={member.id} />
-                  <button
+                  <Button
                     type="submit"
-                    className="rounded-lg px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                    aria-label="Usuń domownika"
+                    variant="danger"
+                    size="sm"
+                    isIconOnly
                   >
-                    Usuń
-                  </button>
+                    <TrashIcon />
+                  </Button>
                 </form>
               )}
             </li>

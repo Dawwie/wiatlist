@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Button, Input } from "@heroui/react";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { createList, deleteList, renameList } from "@/lib/actions";
 import EditableName from "./components/editable-name";
+import TrashIcon from "./components/trash-icon";
 
 export const dynamic = "force-dynamic";
 
@@ -22,19 +24,16 @@ export default async function HomePage() {
       <h1 className="mb-4 text-xl font-bold">Listy zakupów</h1>
 
       <form action={createList} className="mb-6 flex gap-2">
-        <input
+        <Input
           name="name"
           required
           maxLength={100}
           placeholder="Nowa lista, np. Biedronka"
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2"
+          className="flex-1"
         />
-        <button
-          type="submit"
-          className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
-        >
+        <Button type="submit" variant="primary">
           Dodaj
-        </button>
+        </Button>
       </form>
 
       <ul className="flex flex-col gap-2">
@@ -54,13 +53,15 @@ export default async function HomePage() {
             <EditableName id={list.id} name={list.name} action={renameList} />
             <form action={deleteList}>
               <input type="hidden" name="id" value={list.id} />
-              <button
+              <Button
                 type="submit"
                 aria-label="Usuń listę"
-                className="rounded-lg px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                variant="danger"
+                size="sm"
+                isIconOnly
               >
-                Usuń
-              </button>
+                <TrashIcon />
+              </Button>
             </form>
           </li>
         ))}

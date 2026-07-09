@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Wiatlist — PWA shopping list shared by household members via invite links. Next.js 16 (App Router, Turbopack, TypeScript, Tailwind 4) on Vercel; Neon Postgres via `@neondatabase/serverless` (no ORM). Production: https://wiatlist.vercel.app
+Wiatlist — PWA shopping list shared by household members via invite links. Next.js 16 (App Router, Turbopack, TypeScript, Tailwind 4) on Vercel; Neon Postgres via `@neondatabase/serverless` (no ORM); UI on HeroUI v3. Production: https://wiatlist.vercel.app
 
 **Language convention**: all code, URL routes, identifiers, and DB names in English; user-visible UI copy in Polish.
 
@@ -33,6 +33,8 @@ Flow: sign in via `/auth/sign-in` (Google or email/password, prebuilt Neon Auth 
 **Data** (`schema.sql`, applied by `scripts/init-db.mjs`): `users` (membership, FK to Neon Auth's `neon_auth."user"`), `invites`, `lists`, `items`. Auth accounts/sessions live in the `neon_auth` schema, managed by Neon Auth — not this app's schema. Items are **soft-deleted** (`deleted_at`) so `/stats` (GROUP BY over all item rows ever added) survives deletions — don't hard-DELETE items. Lists hard-delete and cascade their items.
 
 **DB access**: `lib/db.ts` exports `sql` — lazily initialized on first call so builds don't require `DATABASE_URL` at import time. Neon driver speaks HTTP to Neon's proxy; it cannot connect to a plain local Postgres. Dev and prod share the same Neon database.
+
+**UI components** — HeroUI v3 (`@heroui/react` + `@heroui/styles`), built on Tailwind v4 + React Aria. No `HeroUIProvider` and no JS `tailwind.config`: styles come from `@import "@heroui/styles"` after `@import "tailwindcss"` in `app/globals.css`. App is light-only — `<html>` is pinned with `class="light" data-theme="light"`. Use `Button`, `Input`, `Select`, `SearchField` for app UI; the unit picker is the reusable `app/components/unit-select.tsx` wrapper over `Select`. Buttons map by intent: `variant="primary"` (CTA), `danger` (delete/revoke), `outline` (chips/copy), `ghost` (nav/edit). Because mutations are uncontrolled `<form action={serverAction}>` submits, keep the `name` prop on fields (React Aria emits the form value) and use `<Button type="submit">`; use `onPress` (not `onClick`) for client handlers. **Auth UI is NOT HeroUI** — the sign-in/sign-up/etc. screens are Neon Auth's prebuilt `<AuthView>` (`@neondatabase/auth-ui`) and must stay as-is.
 
 **PWA**: `app/manifest.ts` + minimal `public/sw.js` (network-first fetch handler, exists for installability) registered by `app/components/sw-register.tsx` in the root layout.
 
