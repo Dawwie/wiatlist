@@ -4,7 +4,7 @@ import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { addItem, deleteItem, updateItem, toggleItem } from "@/lib/actions";
 import { UNITS, DEFAULT_UNIT } from "@/lib/units";
-import ItemRow from "../../components/item-row";
+import ItemList from "../../components/item-list";
 import RefreshPoller from "../../components/refresh-poller";
 
 export const dynamic = "force-dynamic";
@@ -117,21 +117,13 @@ export default async function ListPage({
         </div>
       )}
 
-      <ul className="flex flex-col gap-2">
-        {items.map((item) => (
-          <ItemRow
-            key={item.id}
-            item={item}
-            listId={list.id}
-            toggleItem={toggleItem}
-            deleteItem={deleteItem}
-            updateItem={updateItem}
-          />
-        ))}
-        {items.length === 0 && (
-          <li className="text-sm text-gray-500">Lista jest pusta.</li>
-        )}
-      </ul>
+      <ItemList
+        items={items}
+        listId={list.id}
+        toggleItem={toggleItem}
+        deleteItem={deleteItem}
+        updateItem={updateItem}
+      />
     </div>
   );
 }
