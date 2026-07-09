@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic } from "react";
+import { AnimatePresence } from "motion/react";
 import ItemRow from "./item-row";
 
 type Item = {
@@ -40,17 +41,19 @@ export default function ItemList({
   }
 
   return (
-    <ul className="flex flex-col gap-2">
-      {optimisticItems.map((item) => (
-        <ItemRow
-          key={item.id}
-          item={item}
-          listId={listId}
-          toggleItem={handleToggle}
-          deleteItem={deleteItem}
-          updateItem={updateItem}
-        />
-      ))}
+    <ul className="flex flex-col">
+      <AnimatePresence initial={false}>
+        {optimisticItems.map((item) => (
+          <ItemRow
+            key={item.id}
+            item={item}
+            listId={listId}
+            toggleItem={handleToggle}
+            deleteItem={deleteItem}
+            updateItem={updateItem}
+          />
+        ))}
+      </AnimatePresence>
       {optimisticItems.length === 0 && (
         <li className="text-sm text-gray-500">Lista jest pusta.</li>
       )}
