@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button, Input, SearchField } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions";
 import { DEFAULT_UNIT } from "@/lib/units";
 import ItemList from "../../components/item-list";
+import ProductCombobox from "../../components/product-combobox";
 import RefreshPoller from "../../components/refresh-poller";
 import UnitSelect from "../../components/unit-select";
 
@@ -72,23 +73,7 @@ export default async function ListPage({
 
       <form action={addItem} className="mb-6 flex flex-wrap gap-2">
         <input type="hidden" name="listId" value={list.id} />
-        <SearchField name="name" isRequired aria-label="Dodaj produkt" className="flex-1">
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input
-              maxLength={100}
-              placeholder="Dodaj produkt, np. mleko"
-              list="product-suggestions"
-              autoComplete="off"
-            />
-            <SearchField.ClearButton />
-          </SearchField.Group>
-        </SearchField>
-        <datalist id="product-suggestions">
-          {suggestions.map((s) => (
-            <option key={s.product} value={s.product} />
-          ))}
-        </datalist>
+        <ProductCombobox suggestions={suggestions.map((s) => s.product)} />
         <Input
           name="quantity"
           type="number"
