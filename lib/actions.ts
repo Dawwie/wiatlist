@@ -135,3 +135,10 @@ export async function deleteItem(formData: FormData) {
   await sql`UPDATE items SET deleted_at = now() WHERE id = ${String(formData.get("id"))}`;
   revalidatePath(`/list/${listId}`);
 }
+
+export async function deleteAllItems(formData: FormData) {
+  await requireUser();
+  const listId = String(formData.get("listId"));
+  await sql`UPDATE items SET deleted_at = now() WHERE list_id = ${listId} AND deleted_at IS NULL`;
+  revalidatePath(`/list/${listId}`);
+}

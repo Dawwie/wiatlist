@@ -2,7 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { addItem, deleteItem, updateItem, toggleItem } from "@/lib/actions";
+import {
+  addItem,
+  deleteItem,
+  deleteAllItems,
+  updateItem,
+  toggleItem,
+} from "@/lib/actions";
 import { UNITS, DEFAULT_UNIT } from "@/lib/units";
 import ItemList from "../../components/item-list";
 import RefreshPoller from "../../components/refresh-poller";
@@ -122,6 +128,7 @@ export default async function ListPage({
         listId={list.id}
         toggleItem={toggleItem}
         deleteItem={deleteItem}
+        deleteAllItems={deleteAllItems}
         updateItem={updateItem}
       />
     </div>
