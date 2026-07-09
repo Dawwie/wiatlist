@@ -17,27 +17,3 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
-@keyframes swing-in {
-  0%   { opacity: 0; transform: rotate(-6deg) translateY(-4px); }
-  60%  { transform: rotate(4deg); }
-  100% { opacity: 1; transform: rotate(0); }
-}
-@keyframes swing {
-  0%, 100% { transform: rotate(0); }
-  25%      { transform: rotate(-6deg); }
-  50%      { transform: rotate(4deg); }
-  75%      { transform: rotate(-2deg); }
-}
-@keyframes swing-out {
-  0%   { opacity: 1; transform: rotate(0) translateX(0); }
-  100% { opacity: 0; transform: rotate(8deg) translateX(12px); }
-}
-
-.animate-swing-in  { animation: swing-in 350ms ease-out; transform-origin: top center; }
-.animate-swing     { animation: swing 350ms ease-in-out; transform-origin: top center; display: inline-block; }
-.animate-swing-out { animation: swing-out 300ms ease-in forwards; transform-origin: left center; }
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-swing-in, .animate-swing, .animate-swing-out { animation: none; }
-}
