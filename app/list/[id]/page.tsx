@@ -29,8 +29,18 @@ export default async function ListPage({
   const { id } = await params;
 
   const [list] = (await sql`
-    SELECT id, name, created_by FROM lists WHERE id = ${id}
-  `) as [{ id: string; name: string; created_by: string | null } | undefined];
+    SELECT l.id, l.name, l.created_by, owner.name AS owner_name
+    FROM lists l
+    LEFT JOIN users owner ON owner.id = l.created_by
+    WHERE l.id = ${id}
+  `) as [
+    {
+      id: string;
+      name: string;
+      created_by: string | null;
+      owner_name: string | null;
+    } | undefined,
+  ];
   if (!list) notFound();
   await requireListAccess(user.id, id);
   const isOwner = list.created_by === user.id;
@@ -104,7 +114,15 @@ export default async function ListPage({
         <Link href="/" className="text-sm text-gray-500">
           ← Listy
         </Link>
-        <h1 className="text-xl font-bold">{list.name}</h1>
+        <div className="flex-1">
+          <h1 className="text-xl font-bold">{list.name}</h1>
+          {!isOwner && (
+            <p className="text-xs text-gray-500">
+              Udostępniona
+              {list.owner_name ? ` przez ${list.owner_name}` : ""}
+            </p>
+          )}
+        </div>
         {share && (
           <ShareButton
             listId={list.id}
