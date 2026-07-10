@@ -9,11 +9,12 @@ import TrashIcon from "./components/trash-icon";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  await requireUser();
+  const user = await requireUser();
   const lists = (await sql`
     SELECT l.id, l.name,
            count(i.id) FILTER (WHERE i.deleted_at IS NULL AND NOT i.checked)::int AS open_items
     FROM lists l
+    JOIN list_members m ON m.list_id = l.id AND m.user_id = ${user.id}
     LEFT JOIN items i ON i.list_id = l.id
     GROUP BY l.id, l.name, l.created_at
     ORDER BY l.created_at DESC

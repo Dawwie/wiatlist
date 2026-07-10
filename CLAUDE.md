@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Wiatlist — PWA shopping list shared by household members via invite links. Next.js 16 (App Router, Turbopack, TypeScript, Tailwind 4) on Vercel; Neon Postgres via `@neondatabase/serverless` (no ORM); UI on HeroUI v3. Production: https://wiatlist.vercel.app
+Wiatlist — PWA shopping list app. Each user owns private lists and shares individual lists with others via per-list invite links. Next.js 16 (App Router, Turbopack, TypeScript, Tailwind 4) on Vercel; Neon Postgres via `@neondatabase/serverless` (no ORM); UI on HeroUI v3. Production: https://wiatlist.vercel.app
 
 **Language convention**: all code, URL routes, identifiers, and DB names in English; user-visible UI copy in Polish.
 
@@ -24,13 +24,13 @@ No test suite. Verify changes E2E in the browser (two isolated browser contexts 
 
 **No custom API routes** besides the Neon Auth handler (`app/api/auth/[...path]/route.ts`). All mutations are Server Actions in `lib/actions.ts` (~5–10 lines each: `requireUser()` → one `sql` statement → `revalidatePath()`). Reads happen directly in Server Components. "Realtime" is `app/components/refresh-poller.tsx` calling `router.refresh()` every 5s (paused when `document.hidden`).
 
-**Auth** — Neon Auth (Google OAuth + email/password via `@neondatabase/auth` + `@neondatabase/auth-ui`) authenticates; a separate `users` table membership row authorizes (invite-only gate). Two layers:
-- `proxy.ts` (Next 16 rename of middleware.ts): `auth.middleware({ loginUrl: "/auth/sign-in" })` — requires a Neon Auth session, no DB hit. Excluded paths: `/api/auth/*`, `/auth/*`, `/no-access`, manifest/sw/icons.
-- `lib/auth.ts` `requireUser()`: real authorization (Neon Auth session → `users` table membership lookup, React `cache()`d per request). Must be called at the top of **every protected page and every Server Action** — proxy alone only proves *who*, not *member*.
+**Auth** — Neon Auth (Google OAuth + email/password via `@neondatabase/auth` + `@neondatabase/auth-ui`) authenticates. **Sign-up is open**: any authenticated Neon Auth user gets a `users` row auto-provisioned on first request (`getSessionUser()` upserts). Authorization is **per-list**, not app-wide. Two layers:
+- `proxy.ts` (Next 16 rename of middleware.ts): `auth.middleware({ loginUrl: "/auth/sign-in" })` — requires a Neon Auth session, no DB hit. Excluded paths: `/api/auth/*`, `/auth/*`, `/invite/*`, manifest/sw/icons.
+- `lib/auth.ts`: `requireUser()` (Neon Auth session → auto-provisioned `users` row, React `cache()`d per request) proves *who*; `requireListAccess(userId, listId)` / `requireListOwner(userId, listId)` enforce per-list authorization (`notFound()` on failure). Every protected page and Server Action calls `requireUser()`; every list/item action also calls a per-list guard.
 
-Flow: sign in via `/auth/sign-in` (Google or email/password, prebuilt Neon Auth UI) → first signed-in user when `users` is empty becomes owner via `/setup` → generates multi-use 7-day invite links at `/invites` → invitee signs in, opens `/invite/[token]`, confirms, gets a `users` row keyed to their Neon Auth id. Access is household-wide (every member sees every list); no per-list ACLs. Removing a member (`/invites`) deletes only the `users` row — their Neon Auth account still exists, so they land on `/no-access` until re-invited.
+Access model: a list is visible/editable to its **members** (rows in `list_members`; the owner — `lists.created_by` — is inserted as a member on create). Members can edit items; **only the owner** can rename/delete the list and manage sharing. Sharing flow: owner opens the **Udostępnij** modal (`app/components/share-button.tsx`) on the list page → `createInvite` mints a 7-day per-list token → shares `/invite/[token]` → recipient signs in, confirms, gets a `list_members` row for that list (`acceptInvite`). Owner revokes links or removes members from the same modal (`revokeInvite` / `removeListMember`).
 
-**Data** (`schema.sql`, applied by `scripts/init-db.mjs`): `users` (membership, FK to Neon Auth's `neon_auth."user"`), `invites`, `lists`, `items`. Auth accounts/sessions live in the `neon_auth` schema, managed by Neon Auth — not this app's schema. Items are **soft-deleted** (`deleted_at`) so `/stats` (GROUP BY over all item rows ever added) survives deletions — don't hard-DELETE items. Lists hard-delete and cascade their items.
+**Data** (`schema.sql`, applied by `scripts/init-db.mjs`): `users` (auto-provisioned identity, FK to Neon Auth's `neon_auth."user"`), `list_members` (per-list access; PK `(list_id, user_id)`), `invites` (per-list share tokens, `list_id NOT NULL`), `lists`, `items`. Reads scope by `JOIN list_members m ON m.list_id = l.id AND m.user_id = ${user.id}` (home, list page suggestions, `/stats`, and the version API). Auth accounts/sessions live in the `neon_auth` schema, managed by Neon Auth — not this app's schema. Items are **soft-deleted** (`deleted_at`) so `/stats` survives deletions — don't hard-DELETE items. Lists hard-delete and cascade their items and `list_members`.
 
 **DB access**: `lib/db.ts` exports `sql` — lazily initialized on first call so builds don't require `DATABASE_URL` at import time. Neon driver speaks HTTP to Neon's proxy; it cannot connect to a plain local Postgres. Dev and prod share the same Neon database.
 

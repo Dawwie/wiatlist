@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sql } from "./db";
-import { requireUser } from "./auth";
+import { requireUser, requireListAccess, requireListOwner } from "./auth";
 import { auth } from "./neon-auth/server";
 import { UNITS, DEFAULT_UNIT } from "./units";
 
@@ -17,18 +17,6 @@ function parseQuantityUnit(formData: FormData) {
   return { quantity, unit };
 }
 
-// --- bootstrap ---
-
-export async function setupOwner() {
-  const { data: session } = await auth.getSession();
-  if (!session?.user) redirect("/auth/sign-in");
-  const [{ count }] = (await sql`SELECT count(*)::int AS count FROM users`) as [{ count: number }];
-  if (count > 0) redirect("/");
-  const name = session.user.name?.trim() || session.user.email;
-  await sql`INSERT INTO users (id, name) VALUES (${session.user.id}, ${name}) ON CONFLICT (id) DO NOTHING`;
-  redirect("/");
-}
-
 // --- session ---
 
 export async function signOutAction() {
@@ -36,22 +24,26 @@ export async function signOutAction() {
   redirect("/auth/sign-in");
 }
 
-// --- invites ---
+// --- sharing (per-list invite links) ---
 
-export async function createInvite() {
+export async function createInvite(formData: FormData) {
   const user = await requireUser();
+  const listId = String(formData.get("listId"));
+  await requireListOwner(user.id, listId);
   const token = randomBytes(32).toString("base64url");
   await sql`
-    INSERT INTO invites (token, created_by, expires_at)
-    VALUES (${token}, ${user.id}, now() + interval '7 days')
+    INSERT INTO invites (token, list_id, created_by, expires_at)
+    VALUES (${token}, ${listId}, ${user.id}, now() + interval '7 days')
   `;
-  revalidatePath("/invites");
+  revalidatePath(`/list/${listId}`);
 }
 
 export async function revokeInvite(formData: FormData) {
-  await requireUser();
-  await sql`DELETE FROM invites WHERE token = ${String(formData.get("token"))}`;
-  revalidatePath("/invites");
+  const user = await requireUser();
+  const listId = String(formData.get("listId"));
+  await requireListOwner(user.id, listId);
+  await sql`DELETE FROM invites WHERE token = ${String(formData.get("token"))} AND list_id = ${listId}`;
+  revalidatePath(`/list/${listId}`);
 }
 
 export async function acceptInvite(formData: FormData) {
@@ -59,21 +51,24 @@ export async function acceptInvite(formData: FormData) {
   const { data: session } = await auth.getSession();
   if (!session?.user) redirect(`/auth/sign-in?redirectTo=/invite/${token}`);
   const [invite] = (await sql`
-    SELECT token FROM invites WHERE token = ${token} AND expires_at > now()
-  `) as [{ token: string } | undefined];
+    SELECT list_id FROM invites WHERE token = ${token} AND expires_at > now()
+  `) as [{ list_id: string } | undefined];
   if (!invite) redirect(`/invite/${token}`);
   const name = session.user.name?.trim() || session.user.email;
-  await sql`INSERT INTO users (id, name) VALUES (${session.user.id}, ${name}) ON CONFLICT (id) DO NOTHING`;
-  redirect("/");
+  await sql`INSERT INTO users (id, name) VALUES (${session.user.id}, ${name}) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`;
+  await sql`INSERT INTO list_members (list_id, user_id) VALUES (${invite.list_id}, ${session.user.id}) ON CONFLICT DO NOTHING`;
+  redirect(`/list/${invite.list_id}`);
 }
 
-export async function removeMember(formData: FormData) {
+export async function removeListMember(formData: FormData) {
   const user = await requireUser();
+  const listId = String(formData.get("listId"));
   const memberId = String(formData.get("userId"));
+  await requireListOwner(user.id, listId);
   if (memberId !== user.id) {
-    await sql`DELETE FROM users WHERE id = ${memberId}`;
+    await sql`DELETE FROM list_members WHERE list_id = ${listId} AND user_id = ${memberId}`;
   }
-  revalidatePath("/invites");
+  revalidatePath(`/list/${listId}`);
 }
 
 // --- lists ---
@@ -82,21 +77,28 @@ export async function createList(formData: FormData) {
   const user = await requireUser();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-  await sql`INSERT INTO lists (name, created_by) VALUES (${name}, ${user.id})`;
+  const [list] = (await sql`
+    INSERT INTO lists (name, created_by) VALUES (${name}, ${user.id}) RETURNING id
+  `) as [{ id: string }];
+  await sql`INSERT INTO list_members (list_id, user_id) VALUES (${list.id}, ${user.id})`;
   revalidatePath("/");
 }
 
 export async function renameList(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
+  const id = String(formData.get("id"));
+  await requireListOwner(user.id, id);
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-  await sql`UPDATE lists SET name = ${name} WHERE id = ${String(formData.get("id"))}`;
+  await sql`UPDATE lists SET name = ${name} WHERE id = ${id}`;
   revalidatePath("/");
 }
 
 export async function deleteList(formData: FormData) {
-  await requireUser();
-  await sql`DELETE FROM lists WHERE id = ${String(formData.get("id"))}`;
+  const user = await requireUser();
+  const id = String(formData.get("id"));
+  await requireListOwner(user.id, id);
+  await sql`DELETE FROM lists WHERE id = ${id}`;
   revalidatePath("/");
 }
 
@@ -105,6 +107,7 @@ export async function deleteList(formData: FormData) {
 export async function addItem(formData: FormData) {
   const user = await requireUser();
   const listId = String(formData.get("listId"));
+  await requireListAccess(user.id, listId);
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
   const { quantity, unit } = parseQuantityUnit(formData);
@@ -113,32 +116,36 @@ export async function addItem(formData: FormData) {
 }
 
 export async function toggleItem(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const listId = String(formData.get("listId"));
-  await sql`UPDATE items SET checked = NOT checked WHERE id = ${String(formData.get("id"))}`;
+  await requireListAccess(user.id, listId);
+  await sql`UPDATE items SET checked = NOT checked WHERE id = ${String(formData.get("id"))} AND list_id = ${listId}`;
   revalidatePath(`/list/${listId}`);
 }
 
 export async function updateItem(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const listId = String(formData.get("listId"));
+  await requireListAccess(user.id, listId);
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
   const { quantity, unit } = parseQuantityUnit(formData);
-  await sql`UPDATE items SET name = ${name}, quantity = ${quantity}, unit = ${unit} WHERE id = ${String(formData.get("id"))}`;
+  await sql`UPDATE items SET name = ${name}, quantity = ${quantity}, unit = ${unit} WHERE id = ${String(formData.get("id"))} AND list_id = ${listId}`;
   revalidatePath(`/list/${listId}`);
 }
 
 export async function deleteItem(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const listId = String(formData.get("listId"));
-  await sql`UPDATE items SET deleted_at = now() WHERE id = ${String(formData.get("id"))}`;
+  await requireListAccess(user.id, listId);
+  await sql`UPDATE items SET deleted_at = now() WHERE id = ${String(formData.get("id"))} AND list_id = ${listId}`;
   revalidatePath(`/list/${listId}`);
 }
 
 export async function deleteAllItems(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const listId = String(formData.get("listId"));
+  await requireListAccess(user.id, listId);
   await sql`UPDATE items SET deleted_at = now() WHERE list_id = ${listId} AND deleted_at IS NULL`;
   revalidatePath(`/list/${listId}`);
 }

@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Button, Input } from "@heroui/react";
 import { sql } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, requireListAccess } from "@/lib/auth";
 import {
   addItem,
   deleteItem,
@@ -14,6 +15,7 @@ import { DEFAULT_UNIT } from "@/lib/units";
 import ItemList from "../../components/item-list";
 import ProductCombobox from "../../components/product-combobox";
 import RefreshPoller from "../../components/refresh-poller";
+import ShareButton from "../../components/share-button";
 import UnitSelect from "../../components/unit-select";
 
 export const dynamic = "force-dynamic";
@@ -23,13 +25,15 @@ export default async function ListPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
   const [list] = (await sql`
-    SELECT id, name FROM lists WHERE id = ${id}
-  `) as [{ id: string; name: string } | undefined];
+    SELECT id, name, created_by FROM lists WHERE id = ${id}
+  `) as [{ id: string; name: string; created_by: string | null } | undefined];
   if (!list) notFound();
+  await requireListAccess(user.id, id);
+  const isOwner = list.created_by === user.id;
 
   const items = (await sql`
     SELECT id, name, checked, quantity, unit
@@ -45,14 +49,15 @@ export default async function ListPage({
   }[];
 
   const suggestions = (await sql`
-    SELECT lower(trim(name)) AS product
-    FROM items
+    SELECT lower(trim(i.name)) AS product
+    FROM items i
+    JOIN list_members m ON m.list_id = i.list_id AND m.user_id = ${user.id}
     GROUP BY 1
-    HAVING lower(trim(name)) <> ALL (
+    HAVING lower(trim(i.name)) <> ALL (
       SELECT lower(trim(name)) FROM items
       WHERE list_id = ${id} AND deleted_at IS NULL
     )
-    ORDER BY count(*) DESC, max(created_at) DESC
+    ORDER BY count(*) DESC, max(i.created_at) DESC
     LIMIT 30
   `) as { product: string }[];
 
@@ -60,6 +65,37 @@ export default async function ListPage({
     SELECT (extract(epoch from coalesce(max(updated_at), to_timestamp(0))) * 1000)::bigint::text AS v
     FROM items WHERE list_id = ${id}
   `) as [{ v: string }];
+
+  let share: {
+    links: { token: string; url: string; expiresAt: string }[];
+    members: { id: string; name: string; email: string }[];
+  } | null = null;
+  if (isOwner) {
+    const h = await headers();
+    const host = h.get("host") ?? "localhost:3000";
+    const protocol = host.startsWith("localhost") ? "http" : "https";
+    const links = (await sql`
+      SELECT token, expires_at FROM invites
+      WHERE list_id = ${id} AND expires_at > now()
+      ORDER BY created_at DESC
+    `) as { token: string; expires_at: string }[];
+    const members = (await sql`
+      SELECT u.id, u.name, au.email
+      FROM list_members lm
+      JOIN users u ON u.id = lm.user_id
+      JOIN neon_auth."user" au ON au.id = u.id
+      WHERE lm.list_id = ${id}
+      ORDER BY lm.created_at
+    `) as { id: string; name: string; email: string }[];
+    share = {
+      links: links.map((l) => ({
+        token: l.token,
+        url: `${protocol}://${host}/invite/${l.token}`,
+        expiresAt: l.expires_at,
+      })),
+      members,
+    };
+  }
 
   return (
     <div>
@@ -69,6 +105,14 @@ export default async function ListPage({
           ← Listy
         </Link>
         <h1 className="text-xl font-bold">{list.name}</h1>
+        {share && (
+          <ShareButton
+            listId={list.id}
+            links={share.links}
+            members={share.members}
+            ownerId={user.id}
+          />
+        )}
       </div>
 
       <form

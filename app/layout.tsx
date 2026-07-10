@@ -46,12 +46,6 @@ export default async function RootLayout({
               <Link href="/stats" className="text-gray-600 hover:text-gray-900">
                 Statystyki
               </Link>
-              <Link
-                href="/invites"
-                className="text-gray-600 hover:text-gray-900"
-              >
-                Zaproszenia
-              </Link>
               <span className="ml-auto text-gray-400">{user.name}</span>
               <form action={signOutAction}>
                 <Button type="submit" variant="ghost" size="sm">

@@ -9,6 +9,10 @@ export async function GET(
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const { id } = await params;
+  const access = (await sql`
+    SELECT 1 FROM list_members WHERE list_id = ${id} AND user_id = ${user.id}
+  `) as unknown[];
+  if (!access[0]) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const [{ v }] = (await sql`
     SELECT (extract(epoch from coalesce(max(updated_at), to_timestamp(0))) * 1000)::bigint::text AS v
     FROM items WHERE list_id = ${id}

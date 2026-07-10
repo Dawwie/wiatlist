@@ -34,6 +34,24 @@ ALTER TABLE items ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAU
 
 CREATE INDEX IF NOT EXISTS idx_items_list ON items(list_id) WHERE deleted_at IS NULL;
 
+-- Per-list membership: the owner is a member too, so reads JOIN this single table.
+CREATE TABLE IF NOT EXISTS list_members (
+  list_id uuid NOT NULL REFERENCES lists(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (list_id, user_id)
+);
+
+-- Backfill: every existing list's creator becomes a member of that list.
+INSERT INTO list_members (list_id, user_id)
+SELECT id, created_by FROM lists WHERE created_by IS NOT NULL
+ON CONFLICT DO NOTHING;
+
+-- Invites are now per-list share links (bearer token bound to one list).
+ALTER TABLE invites ADD COLUMN IF NOT EXISTS list_id uuid REFERENCES lists(id) ON DELETE CASCADE;
+DELETE FROM invites WHERE list_id IS NULL;
+ALTER TABLE invites ALTER COLUMN list_id SET NOT NULL;
+
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
 BEGIN
   NEW.updated_at = now();

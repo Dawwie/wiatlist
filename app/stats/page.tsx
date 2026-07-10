@@ -4,12 +4,13 @@ import { requireUser } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export default async function StatsPage() {
-  await requireUser();
+  const user = await requireUser();
   const stats = (await sql`
-    SELECT lower(trim(name)) AS product,
+    SELECT lower(trim(i.name)) AS product,
            count(*)::int AS times_added,
-           max(created_at) AS last_added
-    FROM items
+           max(i.created_at) AS last_added
+    FROM items i
+    JOIN list_members m ON m.list_id = i.list_id AND m.user_id = ${user.id}
     GROUP BY 1
     ORDER BY 2 DESC, 3 DESC
     LIMIT 25
