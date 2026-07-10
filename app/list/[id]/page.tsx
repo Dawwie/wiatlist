@@ -147,12 +147,12 @@ export default async function ListPage({
             step="any"
             inputMode="decimal"
             placeholder="Ilość"
-            className="flex-1 sm:w-24 sm:flex-none"
+            className="min-w-0 flex-1 sm:w-24 sm:flex-none"
           />
           <UnitSelect
             name="unit"
             defaultUnit={DEFAULT_UNIT}
-            className="flex-1 sm:flex-none"
+            className="min-w-0 flex-1 sm:flex-none"
           />
           <Button type="submit" variant="primary" className="flex-1 sm:flex-none">
             Dodaj
