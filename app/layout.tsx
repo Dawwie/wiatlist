@@ -16,6 +16,7 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Wiatlist",
   description: "Wspólna lista zakupów dla domowników",
+  icons: { icon: "/icons/icon-192.png" },
 };
 
 export const viewport: Viewport = {
