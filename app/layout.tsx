@@ -8,6 +8,7 @@ import { signOutAction } from "@/lib/actions";
 import SwRegister from "./components/sw-register";
 import AuthProvider from "./components/auth-provider";
 import Logo from "./components/logo";
+import NavDrawer from "./components/nav-drawer";
 
 const figtree = Figtree({
   variable: "--font-figtree",
@@ -49,7 +50,10 @@ export default async function RootLayout({
           {user && (
             <nav className="flex items-center gap-4 border-b border-border px-4 py-3 text-sm">
               <Logo />
-              <Link href="/stats" className="text-muted hover:text-foreground">
+              <Link
+                href="/stats"
+                className="hidden text-muted hover:text-foreground sm:block"
+              >
                 Statystyki
               </Link>
               <span
@@ -58,11 +62,12 @@ export default async function RootLayout({
               >
                 {user.name.charAt(0).toUpperCase()}
               </span>
-              <form action={signOutAction}>
+              <form action={signOutAction} className="hidden sm:block">
                 <Button type="submit" variant="ghost" size="sm">
                   Wyloguj
                 </Button>
               </form>
+              <NavDrawer />
             </nav>
           )}
           <main className="p-4">{children}</main>
