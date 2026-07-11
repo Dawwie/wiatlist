@@ -31,9 +31,9 @@ export default function ShareButton({
       >
         Udostępnij
       </Button>
-      <Modal.Backdrop>
+      <Modal.Backdrop variant="blur">
         <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
+          <Modal.Dialog className="bg-background">
             <Modal.CloseTrigger />
             <Modal.Header>
               <Modal.Heading>Udostępnij listę</Modal.Heading>
@@ -55,7 +55,7 @@ export default function ShareButton({
                       <p className="mb-2 break-all text-xs text-muted">
                         {link.url}
                       </p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <CopyButton text={link.url} />
                         <form action={revokeInvite}>
                           <input type="hidden" name="listId" value={listId} />
@@ -65,7 +65,7 @@ export default function ShareButton({
                             Unieważnij
                           </Button>
                         </form>
-                        <span className="ml-auto text-xs text-muted">
+                        <span className="ml-auto whitespace-nowrap text-xs text-muted">
                           ważny do{" "}
                           {new Date(link.expiresAt).toLocaleDateString("pl-PL")}
                         </span>
@@ -119,11 +119,6 @@ export default function ShareButton({
                 </ul>
               </section>
             </Modal.Body>
-            <Modal.Footer>
-              <Button slot="close" variant="ghost">
-                Zamknij
-              </Button>
-            </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

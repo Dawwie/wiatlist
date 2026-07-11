@@ -19,6 +19,7 @@
   --surface-tertiary: #dcd3c4;
   --muted: #645c50;
   --border: #dcd3c4;
+  --field-background: var(--background);
   --separator: color-mix(in srgb, #201e1d 16%, transparent);
 }
 
