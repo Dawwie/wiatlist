@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Wspólna lista zakupów dla domowników",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#16a34a",
+    background_color: "#f5ead8",
+    theme_color: "#2f8050",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },

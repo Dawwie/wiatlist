@@ -77,7 +77,7 @@ export default function ItemList({
           ))}
         </AnimatePresence>
         {optimisticItems.length === 0 && (
-          <li className="text-sm text-gray-500">Lista jest pusta.</li>
+          <li className="text-sm text-muted">Lista jest pusta.</li>
         )}
       </ul>
     </div>

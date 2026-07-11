@@ -43,23 +43,23 @@ export default function ItemRow({
       <motion.div
         variants={rowContentVariants}
         transition={itemTransition}
-        className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2"
+        className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors duration-200 ${
+          item.checked ? "border-muted/40" : "border-border"
+        }`}
       >
         <form action={toggleItem} className="flex flex-1 items-center gap-3">
           <input type="hidden" name="id" value={item.id} />
           <input type="hidden" name="listId" value={listId} />
           <button
             type="submit"
-            className={`flex-1 text-left transition-colors duration-200 ${
-              item.checked ? "text-gray-400 line-through" : ""
-            }`}
+            className="flex-1 text-left"
           >
             <span
               aria-hidden
               className={`mr-3 inline-block h-5 w-5 rounded border align-middle text-center text-sm leading-5 transition-colors duration-200 ${
                 item.checked
-                  ? "border-green-600 bg-green-600 text-white"
-                  : "border-gray-300"
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-border"
               }`}
             >
               <span
@@ -70,9 +70,15 @@ export default function ItemRow({
                 ✓
               </span>
             </span>
-            {item.name}
+            <span
+              className={`transition-colors duration-200 ${
+                item.checked ? "text-muted line-through" : ""
+              }`}
+            >
+              {item.name}
+            </span>
             {item.quantity != null && (
-              <span className="ml-2 text-sm text-gray-500">
+              <span className="ml-2 text-sm text-muted">
                 {Number(item.quantity)} {item.unit}
               </span>
             )}

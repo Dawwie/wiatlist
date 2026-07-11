@@ -20,7 +20,7 @@ export default async function StatsPage() {
     <div>
       <h1 className="mb-4 text-xl font-bold">Najczęściej kupowane</h1>
       {stats.length === 0 ? (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted">
           Brak danych — dodaj pierwsze produkty do listy.
         </p>
       ) : (
@@ -28,13 +28,13 @@ export default async function StatsPage() {
           {stats.map((row, index) => (
             <li
               key={row.product}
-              className="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2"
+              className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
             >
-              <span className="w-6 text-right text-sm text-gray-400">
+              <span className="w-6 text-right text-sm text-muted">
                 {index + 1}.
               </span>
               <span className="flex-1 font-medium">{row.product}</span>
-              <span className="text-sm text-gray-500">×{row.times_added}</span>
+              <span className="text-sm text-muted">×{row.times_added}</span>
             </li>
           ))}
         </ol>

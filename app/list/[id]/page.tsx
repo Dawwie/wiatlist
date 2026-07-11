@@ -111,13 +111,13 @@ export default async function ListPage({
     <div>
       <RefreshPoller listId={list.id} initialVersion={version} />
       <div className="mb-4 flex items-center gap-2">
-        <Link href="/" className="text-sm text-gray-500">
+        <Link href="/" className="text-sm text-muted">
           ← Listy
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold">{list.name}</h1>
           {!isOwner && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               Udostępniona
               {list.owner_name ? ` przez ${list.owner_name}` : ""}
             </p>

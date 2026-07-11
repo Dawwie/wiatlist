@@ -27,7 +27,7 @@ export default async function InvitePage({
     return (
       <div className="mx-auto mt-16 max-w-sm text-center">
         <h1 className="mb-2 text-2xl font-bold">Link wygasł</h1>
-        <p className="text-gray-600">
+        <p className="text-muted">
           Ten link jest nieważny. Poproś o nowy link do udostępnienia.
         </p>
       </div>
@@ -37,7 +37,7 @@ export default async function InvitePage({
   return (
     <div className="mx-auto mt-16 max-w-sm">
       <h1 className="mb-2 text-2xl font-bold">Udostępniono Ci listę</h1>
-      <p className="mb-6 text-gray-600">
+      <p className="mb-6 text-muted">
         „{invite.name}" — dołączasz jako{" "}
         {session.user.name || session.user.email}
       </p>

@@ -50,19 +50,19 @@ export default async function HomePage() {
         {lists.map((list) => (
           <li
             key={list.id}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2"
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"
           >
             <Link href={`/list/${list.id}`} className="flex-1 font-medium">
               <span className="flex items-center">
                 {list.name}
                 {list.open_items > 0 && (
-                  <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                  <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent-soft-foreground">
                     {list.open_items}
                   </span>
                 )}
               </span>
               {!list.is_owner && (
-                <span className="mt-0.5 block text-xs font-normal text-gray-500">
+                <span className="mt-0.5 block text-xs font-normal text-muted">
                   Udostępniona
                   {list.owner_name ? ` przez ${list.owner_name}` : ""}
                 </span>
@@ -88,7 +88,7 @@ export default async function HomePage() {
           </li>
         ))}
         {lists.length === 0 && (
-          <li className="text-sm text-gray-500">
+          <li className="text-sm text-muted">
             Nie masz jeszcze żadnej listy — dodaj pierwszą powyżej.
           </li>
         )}

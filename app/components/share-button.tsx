@@ -50,9 +50,9 @@ export default function ShareButton({
                   {links.map((link) => (
                     <li
                       key={link.token}
-                      className="rounded-lg border border-gray-200 p-3"
+                      className="rounded-lg border border-border p-3"
                     >
-                      <p className="mb-2 break-all text-xs text-gray-500">
+                      <p className="mb-2 break-all text-xs text-muted">
                         {link.url}
                       </p>
                       <div className="flex items-center gap-2">
@@ -65,7 +65,7 @@ export default function ShareButton({
                             Unieważnij
                           </Button>
                         </form>
-                        <span className="ml-auto text-xs text-gray-400">
+                        <span className="ml-auto text-xs text-muted">
                           ważny do{" "}
                           {new Date(link.expiresAt).toLocaleDateString("pl-PL")}
                         </span>
@@ -73,7 +73,7 @@ export default function ShareButton({
                     </li>
                   ))}
                   {links.length === 0 && (
-                    <li className="text-sm text-gray-500">
+                    <li className="text-sm text-muted">
                       Brak aktywnych linków.
                     </li>
                   )}
@@ -86,15 +86,15 @@ export default function ShareButton({
                   {members.map((member) => (
                     <li
                       key={member.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2"
+                      className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
                     >
                       <span className="text-sm">
                         {member.name}
-                        <span className="ml-2 text-xs text-gray-400">
+                        <span className="ml-2 text-xs text-muted">
                           {member.email}
                         </span>
                         {member.id === ownerId && (
-                          <span className="ml-2 text-xs text-gray-400">
+                          <span className="ml-2 text-xs text-muted">
                             (właściciel)
                           </span>
                         )}
