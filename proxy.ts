@@ -12,6 +12,15 @@ export default function proxy(request: NextRequest) {
   if (request.headers.get("next-action")) {
     return NextResponse.next();
   }
+  // Same problem for RSC requests (router.refresh() from refresh-poller.tsx,
+  // link prefetches, client-side navigations). They routinely overlap with a
+  // document navigation, and each middleware pass that misses the session_data
+  // cookie cache rotates the session token upstream — the request that loses
+  // that race presents a consumed token and gets bounced to /auth/sign-in.
+  // requireUser() on every protected page is the real gate here too.
+  if (request.headers.get("rsc")) {
+    return NextResponse.next();
+  }
   return authMiddleware(request);
 }
 
