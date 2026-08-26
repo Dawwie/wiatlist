@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button, Drawer, useOverlayState } from "@heroui/react";
 import { signOutAction } from "@/lib/users/actions";
+import { pressable } from "../ui/press";
 
 function MenuIcon() {
   return (
@@ -93,7 +94,7 @@ export default function NavDrawer() {
                 <Link
                   href="/stats"
                   onClick={state.close}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-brand-forest"
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-brand-forest ${pressable}`}
                 >
                   <ChartIcon />
                   Statystyki

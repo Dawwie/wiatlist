@@ -16,6 +16,7 @@ import ProductCombobox from "../../components/items/product-combobox";
 import RefreshPoller from "../../components/lists/refresh-poller";
 import ShareButton from "../../components/sharing/share-button";
 import UnitSelect from "../../components/ui/unit-select";
+import { pressable } from "../../components/ui/press";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,10 @@ export default async function ListPage({
     <div>
       <RefreshPoller listId={list.id} initialVersion={version} />
       <div className="mb-4 flex items-center gap-2">
-        <Link href="/" className="text-sm text-muted">
+        <Link
+          href="/"
+          className={`-mx-1 inline-flex rounded-md px-1 text-sm text-muted ${pressable}`}
+        >
           ← Listy
         </Link>
         <div className="flex-1">

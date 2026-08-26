@@ -5,6 +5,7 @@ import { getListsForUser } from "@/lib/lists";
 import { createList, deleteList } from "@/lib/lists/actions";
 import ListNameEditor from "./components/lists/list-name-editor";
 import TrashIcon from "./components/ui/trash-icon";
+import { pressableRow } from "./components/ui/press";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function HomePage() {
         {lists.map((list) => (
           <li
             key={list.id}
-            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"
+            className={`flex items-center gap-2 rounded-lg border border-border px-3 py-2 ${pressableRow}`}
           >
             <Link href={`/list/${list.id}`} className="flex-1 font-medium">
               <span className="flex items-center">
