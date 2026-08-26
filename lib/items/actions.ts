@@ -4,16 +4,7 @@ import { revalidatePath } from "next/cache";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/users";
 import { requireListAccess } from "@/lib/lists";
-import { UNITS, DEFAULT_UNIT } from "./units";
-
-function parseQuantityUnit(formData: FormData) {
-  const qtyRaw = String(formData.get("quantity") ?? "").trim();
-  let quantity: number | null = qtyRaw === "" ? null : Number(qtyRaw);
-  if (quantity !== null && (Number.isNaN(quantity) || quantity < 0)) quantity = null;
-  const unitRaw = String(formData.get("unit") ?? "");
-  const unit = (UNITS as readonly string[]).includes(unitRaw) ? unitRaw : DEFAULT_UNIT;
-  return { quantity, unit };
-}
+import { parseQuantityUnit } from "./form";
 
 // Every action re-derives the list from the form and re-checks membership: the
 // client is not trusted, and `requireUser()` only proves who, not what.
