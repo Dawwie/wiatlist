@@ -2,6 +2,7 @@
 
 import { Button, Input, Modal, useOverlayState } from "@heroui/react";
 import { renameList } from "@/lib/lists/actions";
+import { useAutoFocus } from "../ui/autofocus";
 
 export default function ListNameEditor({
   id,
@@ -24,35 +25,51 @@ export default function ListNameEditor({
             <Modal.Header>
               <Modal.Heading>Zmień nazwę listy</Modal.Heading>
             </Modal.Header>
-            <form
-              action={async (formData) => {
-                await renameList(formData);
-                state.close();
-              }}
-            >
-              <Modal.Body>
-                <input type="hidden" name="id" value={id} />
-                <Input
-                  name="name"
-                  defaultValue={name}
-                  required
-                  maxLength={100}
-                  autoFocus
-                  aria-label="Nazwa listy"
-                />
-              </Modal.Body>
-              <Modal.Footer>
-                <Button slot="close" variant="ghost">
-                  Anuluj
-                </Button>
-                <Button type="submit" variant="primary">
-                  Zapisz
-                </Button>
-              </Modal.Footer>
-            </form>
+            <RenameForm id={id} name={name} onSaved={state.close} />
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
     </Modal>
+  );
+}
+
+function RenameForm({
+  id,
+  name,
+  onSaved,
+}: {
+  id: string;
+  name: string;
+  onSaved: () => void;
+}) {
+  const nameRef = useAutoFocus();
+
+  return (
+    <form
+      action={async (formData) => {
+        await renameList(formData);
+        onSaved();
+      }}
+    >
+      <Modal.Body>
+        <input type="hidden" name="id" value={id} />
+        <Input
+          ref={nameRef}
+          name="name"
+          defaultValue={name}
+          required
+          maxLength={100}
+          aria-label="Nazwa listy"
+        />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button slot="close" variant="ghost">
+          Anuluj
+        </Button>
+        <Button type="submit" variant="primary">
+          Zapisz
+        </Button>
+      </Modal.Footer>
+    </form>
   );
 }
