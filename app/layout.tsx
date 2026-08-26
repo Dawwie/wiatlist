@@ -3,12 +3,12 @@ import { Figtree, Caprasimo } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { Button } from "@heroui/react";
-import { getSessionUser } from "@/lib/auth";
-import { signOutAction } from "@/lib/actions";
-import SwRegister from "./components/sw-register";
-import AuthProvider from "./components/auth-provider";
-import Logo from "./components/logo";
-import NavDrawer from "./components/nav-drawer";
+import { getSessionUser } from "@/lib/users";
+import { signOutAction } from "@/lib/users/actions";
+import AuthProvider from "./components/shell/auth-provider";
+import Logo from "./components/shell/logo";
+import NavDrawer from "./components/shell/nav-drawer";
+import SwRegister from "./components/shell/sw-register";
 
 const figtree = Figtree({
   variable: "--font-figtree",

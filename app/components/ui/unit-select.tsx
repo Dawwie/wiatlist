@@ -1,7 +1,7 @@
 "use client";
 
 import { Select, ListBox } from "@heroui/react";
-import { UNITS } from "@/lib/units";
+import { UNITS } from "@/lib/items/units";
 
 export default function UnitSelect({
   name,

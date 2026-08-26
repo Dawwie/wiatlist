@@ -1,20 +1,11 @@
-import { sql } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser } from "@/lib/users";
+import { getPurchaseStats } from "@/lib/items";
 
 export const dynamic = "force-dynamic";
 
 export default async function StatsPage() {
   const user = await requireUser();
-  const stats = (await sql`
-    SELECT lower(trim(i.name)) AS product,
-           count(*)::int AS times_added,
-           max(i.created_at) AS last_added
-    FROM items i
-    JOIN list_members m ON m.list_id = i.list_id AND m.user_id = ${user.id}
-    GROUP BY 1
-    ORDER BY 2 DESC, 3 DESC
-    LIMIT 25
-  `) as { product: string; times_added: number; last_added: string }[];
+  const stats = await getPurchaseStats(user.id);
 
   return (
     <div>
@@ -34,7 +25,7 @@ export default async function StatsPage() {
                 {index + 1}.
               </span>
               <span className="flex-1 font-medium">{row.product}</span>
-              <span className="text-sm text-muted">×{row.times_added}</span>
+              <span className="text-sm text-muted">×{row.timesAdded}</span>
             </li>
           ))}
         </ol>

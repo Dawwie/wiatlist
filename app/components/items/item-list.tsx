@@ -3,31 +3,17 @@
 import { useOptimistic } from "react";
 import { AnimatePresence } from "motion/react";
 import { Button } from "@heroui/react";
+import { deleteAllItems, toggleItem } from "@/lib/items/actions";
+import type { Item } from "@/lib/items";
+import TrashIcon from "../ui/trash-icon";
 import ItemRow from "./item-row";
-import TrashIcon from "./trash-icon";
-
-type Item = {
-  id: string;
-  name: string;
-  checked: boolean;
-  quantity: string | null;
-  unit: string;
-};
 
 export default function ItemList({
   items,
   listId,
-  toggleItem,
-  deleteItem,
-  deleteAllItems,
-  updateItem,
 }: {
   items: Item[];
   listId: string;
-  toggleItem: (formData: FormData) => Promise<void>;
-  deleteItem: (formData: FormData) => Promise<void>;
-  deleteAllItems: (formData: FormData) => Promise<void>;
-  updateItem: (formData: FormData) => Promise<void>;
 }) {
   const [optimisticItems, applyOptimistic] = useOptimistic(
     items,
@@ -70,9 +56,7 @@ export default function ItemList({
               key={item.id}
               item={item}
               listId={listId}
-              toggleItem={handleToggle}
-              deleteItem={deleteItem}
-              updateItem={updateItem}
+              onToggle={handleToggle}
             />
           ))}
         </AnimatePresence>

@@ -2,8 +2,10 @@
 
 import { motion } from "motion/react";
 import { Button } from "@heroui/react";
-import EditableName from "./editable-name";
-import TrashIcon from "./trash-icon";
+import { deleteItem } from "@/lib/items/actions";
+import type { Item } from "@/lib/items";
+import TrashIcon from "../ui/trash-icon";
+import ItemEditor from "./item-editor";
 import {
   itemTransition,
   rowContentVariants,
@@ -13,21 +15,12 @@ import {
 export default function ItemRow({
   item,
   listId,
-  toggleItem,
-  deleteItem,
-  updateItem,
+  onToggle,
 }: {
-  item: {
-    id: string;
-    name: string;
-    checked: boolean;
-    quantity: string | null;
-    unit: string;
-  };
+  item: Item;
   listId: string;
-  toggleItem: (formData: FormData) => Promise<void>;
-  deleteItem: (formData: FormData) => Promise<void>;
-  updateItem: (formData: FormData) => Promise<void>;
+  // Owned by ItemList so the optimistic re-order happens before the round-trip.
+  onToggle: (formData: FormData) => Promise<void>;
 }) {
   return (
     <motion.li
@@ -47,7 +40,7 @@ export default function ItemRow({
           item.checked ? "border-muted/40" : "border-border"
         }`}
       >
-        <form action={toggleItem} className="flex flex-1 items-center gap-3">
+        <form action={onToggle} className="flex flex-1 items-center gap-3">
           <input type="hidden" name="id" value={item.id} />
           <input type="hidden" name="listId" value={listId} />
           <button
@@ -84,14 +77,7 @@ export default function ItemRow({
             )}
           </button>
         </form>
-        <EditableName
-          id={item.id}
-          name={item.name}
-          quantity={item.quantity}
-          unit={item.unit}
-          action={updateItem}
-          extraFields={{ listId }}
-        />
+        <ItemEditor item={item} listId={listId} />
         <form action={deleteItem}>
           <input type="hidden" name="id" value={item.id} />
           <input type="hidden" name="listId" value={listId} />

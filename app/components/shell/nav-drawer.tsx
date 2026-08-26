@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button, Drawer, useOverlayState } from "@heroui/react";
-import { signOutAction } from "@/lib/actions";
+import { signOutAction } from "@/lib/users/actions";
 
 function MenuIcon() {
   return (

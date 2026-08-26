@@ -1,33 +1,16 @@
 import Link from "next/link";
 import { Button, Input } from "@heroui/react";
-import { sql } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
-import { createList, deleteList, renameList } from "@/lib/actions";
-import EditableName from "./components/editable-name";
-import TrashIcon from "./components/trash-icon";
+import { requireUser } from "@/lib/users";
+import { getListsForUser } from "@/lib/lists";
+import { createList, deleteList } from "@/lib/lists/actions";
+import ListNameEditor from "./components/lists/list-name-editor";
+import TrashIcon from "./components/ui/trash-icon";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const user = await requireUser();
-  const lists = (await sql`
-    SELECT l.id, l.name,
-           (l.created_by = ${user.id}) AS is_owner,
-           owner.name AS owner_name,
-           count(i.id) FILTER (WHERE i.deleted_at IS NULL AND NOT i.checked)::int AS open_items
-    FROM lists l
-    JOIN list_members m ON m.list_id = l.id AND m.user_id = ${user.id}
-    LEFT JOIN users owner ON owner.id = l.created_by
-    LEFT JOIN items i ON i.list_id = l.id
-    GROUP BY l.id, l.name, l.created_at, l.created_by, owner.name
-    ORDER BY l.created_at DESC
-  `) as {
-    id: string;
-    name: string;
-    is_owner: boolean;
-    owner_name: string | null;
-    open_items: number;
-  }[];
+  const lists = await getListsForUser(user.id);
 
   return (
     <div>
@@ -55,22 +38,22 @@ export default async function HomePage() {
             <Link href={`/list/${list.id}`} className="flex-1 font-medium">
               <span className="flex items-center">
                 {list.name}
-                {list.open_items > 0 && (
+                {list.openItems > 0 && (
                   <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent-soft-foreground">
-                    {list.open_items}
+                    {list.openItems}
                   </span>
                 )}
               </span>
-              {!list.is_owner && (
+              {!list.isOwner && (
                 <span className="mt-0.5 block text-xs font-normal text-muted">
                   Udostępniona
-                  {list.owner_name ? ` przez ${list.owner_name}` : ""}
+                  {list.ownerName ? ` przez ${list.ownerName}` : ""}
                 </span>
               )}
             </Link>
-            {list.is_owner && (
+            {list.isOwner && (
               <>
-                <EditableName id={list.id} name={list.name} action={renameList} />
+                <ListNameEditor id={list.id} name={list.name} />
                 <form action={deleteList}>
                   <input type="hidden" name="id" value={list.id} />
                   <Button

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/users";
+import { hasListAccess } from "@/lib/lists";
+import { getListVersion } from "@/lib/items";
 
+// Polled by refresh-poller.tsx. Unlike the pages it answers with status codes
+// rather than notFound()/redirect(), so it uses the boolean access check.
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -9,13 +12,9 @@ export async function GET(
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const { id } = await params;
-  const access = (await sql`
-    SELECT 1 FROM list_members WHERE list_id = ${id} AND user_id = ${user.id}
-  `) as unknown[];
-  if (!access[0]) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  const [{ v }] = (await sql`
-    SELECT (extract(epoch from coalesce(max(updated_at), to_timestamp(0))) * 1000)::bigint::text AS v
-    FROM items WHERE list_id = ${id}
-  `) as [{ v: string }];
+  if (!(await hasListAccess(user.id, id))) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  const v = await getListVersion(id);
   return NextResponse.json({ v }, { headers: { "Cache-Control": "no-store" } });
 }

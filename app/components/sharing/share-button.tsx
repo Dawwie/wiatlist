@@ -1,12 +1,10 @@
 "use client";
 
 import { Button, Modal, useOverlayState } from "@heroui/react";
-import { createInvite, removeListMember, revokeInvite } from "@/lib/actions";
+import { createInvite, removeListMember, revokeInvite } from "@/lib/sharing/actions";
+import type { ListMember, ShareLink } from "@/lib/sharing";
+import TrashIcon from "../ui/trash-icon";
 import CopyButton from "./copy-button";
-import TrashIcon from "./trash-icon";
-
-type ShareLink = { token: string; url: string; expiresAt: string };
-type Member = { id: string; name: string; email: string };
 
 export default function ShareButton({
   listId,
@@ -16,7 +14,7 @@ export default function ShareButton({
 }: {
   listId: string;
   links: ShareLink[];
-  members: Member[];
+  members: ListMember[];
   ownerId: string;
 }) {
   const state = useOverlayState();

@@ -1,22 +1,21 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Button, Input } from "@heroui/react";
-import { sql } from "@/lib/db";
-import { requireUser, requireListAccess } from "@/lib/auth";
+import { requireUser } from "@/lib/users";
+import { getListForMember } from "@/lib/lists";
+import { addItem } from "@/lib/items/actions";
 import {
-  addItem,
-  deleteItem,
-  deleteAllItems,
-  updateItem,
-  toggleItem,
-} from "@/lib/actions";
-import { DEFAULT_UNIT } from "@/lib/units";
-import ItemList from "../../components/item-list";
-import ProductCombobox from "../../components/product-combobox";
-import RefreshPoller from "../../components/refresh-poller";
-import ShareButton from "../../components/share-button";
-import UnitSelect from "../../components/unit-select";
+  DEFAULT_UNIT,
+  getListItems,
+  getListVersion,
+  getProductSuggestions,
+} from "@/lib/items";
+import { getShareState } from "@/lib/sharing";
+import ItemList from "../../components/items/item-list";
+import ProductCombobox from "../../components/items/product-combobox";
+import RefreshPoller from "../../components/lists/refresh-poller";
+import ShareButton from "../../components/sharing/share-button";
+import UnitSelect from "../../components/ui/unit-select";
 
 export const dynamic = "force-dynamic";
 
@@ -28,84 +27,16 @@ export default async function ListPage({
   const user = await requireUser();
   const { id } = await params;
 
-  const [list] = (await sql`
-    SELECT l.id, l.name, l.created_by, owner.name AS owner_name
-    FROM lists l
-    LEFT JOIN users owner ON owner.id = l.created_by
-    WHERE l.id = ${id}
-  `) as [
-    {
-      id: string;
-      name: string;
-      created_by: string | null;
-      owner_name: string | null;
-    } | undefined,
-  ];
+  // Membership is part of the query: a non-member gets nothing back.
+  const list = await getListForMember(user.id, id);
   if (!list) notFound();
-  await requireListAccess(user.id, id);
-  const isOwner = list.created_by === user.id;
 
-  const items = (await sql`
-    SELECT id, name, checked, quantity, unit
-    FROM items
-    WHERE list_id = ${id} AND deleted_at IS NULL
-    ORDER BY checked, created_at DESC
-  `) as {
-    id: string;
-    name: string;
-    checked: boolean;
-    quantity: string | null;
-    unit: string;
-  }[];
-
-  const suggestions = (await sql`
-    SELECT lower(trim(i.name)) AS product
-    FROM items i
-    JOIN list_members m ON m.list_id = i.list_id AND m.user_id = ${user.id}
-    GROUP BY 1
-    HAVING lower(trim(i.name)) <> ALL (
-      SELECT lower(trim(name)) FROM items
-      WHERE list_id = ${id} AND deleted_at IS NULL
-    )
-    ORDER BY count(*) DESC, max(i.created_at) DESC
-    LIMIT 30
-  `) as { product: string }[];
-
-  const [{ v: version }] = (await sql`
-    SELECT (extract(epoch from coalesce(max(updated_at), to_timestamp(0))) * 1000)::bigint::text AS v
-    FROM items WHERE list_id = ${id}
-  `) as [{ v: string }];
-
-  let share: {
-    links: { token: string; url: string; expiresAt: string }[];
-    members: { id: string; name: string; email: string }[];
-  } | null = null;
-  if (isOwner) {
-    const h = await headers();
-    const host = h.get("host") ?? "localhost:3000";
-    const protocol = host.startsWith("localhost") ? "http" : "https";
-    const links = (await sql`
-      SELECT token, expires_at FROM invites
-      WHERE list_id = ${id} AND expires_at > now()
-      ORDER BY created_at DESC
-    `) as { token: string; expires_at: string }[];
-    const members = (await sql`
-      SELECT u.id, u.name, au.email
-      FROM list_members lm
-      JOIN users u ON u.id = lm.user_id
-      JOIN neon_auth."user" au ON au.id = u.id
-      WHERE lm.list_id = ${id}
-      ORDER BY lm.created_at
-    `) as { id: string; name: string; email: string }[];
-    share = {
-      links: links.map((l) => ({
-        token: l.token,
-        url: `${protocol}://${host}/invite/${l.token}`,
-        expiresAt: l.expires_at,
-      })),
-      members,
-    };
-  }
+  const [items, suggestions, version, share] = await Promise.all([
+    getListItems(id),
+    getProductSuggestions(user.id, id),
+    getListVersion(id),
+    list.isOwner ? getShareState(id) : null,
+  ]);
 
   return (
     <div>
@@ -116,10 +47,10 @@ export default async function ListPage({
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold">{list.name}</h1>
-          {!isOwner && (
+          {!list.isOwner && (
             <p className="text-xs text-muted">
               Udostępniona
-              {list.owner_name ? ` przez ${list.owner_name}` : ""}
+              {list.ownerName ? ` przez ${list.ownerName}` : ""}
             </p>
           )}
         </div>
@@ -138,7 +69,7 @@ export default async function ListPage({
         className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap"
       >
         <input type="hidden" name="listId" value={list.id} />
-        <ProductCombobox suggestions={suggestions.map((s) => s.product)} />
+        <ProductCombobox suggestions={suggestions} />
         <div className="flex gap-2 sm:contents">
           <Input
             name="quantity"
@@ -160,14 +91,7 @@ export default async function ListPage({
         </div>
       </form>
 
-      <ItemList
-        items={items}
-        listId={list.id}
-        toggleItem={toggleItem}
-        deleteItem={deleteItem}
-        deleteAllItems={deleteAllItems}
-        updateItem={updateItem}
-      />
+      <ItemList items={items} listId={list.id} />
     </div>
   );
 }
