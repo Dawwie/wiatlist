@@ -24,7 +24,16 @@ const caprasimo = Caprasimo({
 export const metadata: Metadata = {
   title: "Wiatlist",
   description: "Wspólna lista zakupów dla domowników",
-  icons: { icon: "/icons/icon-192.png" },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Wiatlist",
+    statusBarStyle: "default",
+    startupImage: "/icons/apple-splash.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -42,6 +51,7 @@ export default async function RootLayout({
       lang="pl"
       className={`light ${figtree.variable} ${caprasimo.variable} h-full bg-background antialiased`}
       data-theme="light"
+      style={{ backgroundColor: "#f5ead8" }}
       suppressHydrationWarning
     >
       <body className="mx-auto min-h-full w-full max-w-xl bg-background text-foreground">
